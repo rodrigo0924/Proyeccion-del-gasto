@@ -1,0 +1,20 @@
+# Base y datos pesados: quedan en tu PC, nunca suben al repo.
+# Solo viaja el tablero (index.html, app.js, styles.css, data/*.js, icons/).
+*.duckdb
+*.parquet
+**/*.csv
+data/transaccional/
+
+# Trabajo local
+_backup/
+.playwright-mcp/
+__pycache__/
+*.pyc
+.opencode/
+skills-lock.json
+.opencode.json
+opencode.json
+.agents/
+node_modules/
+dist/
+build/

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Herramienta de proyección de gasto médico Q×P — datos ficticios de demostración." />
+<meta property="og:title" content="Proyección de gasto — Tablero gerencial" />
+<meta property="og:description" content="Modelo Q×P con datos ficticios. Sin datos reales." />
+<meta name="theme-color" content="#0A3A6B" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="icon" href="icons/icon-192.png" type="image/png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<title>Herramienta de proyección de gasto — Tablero gerencial</title>
+<link rel="stylesheet" href="styles.css?v=20" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist-min@2.35.2/plotly.min.js"></script>
+</head>
+<body>
+<a class="skip" href="#modelo">Saltar al contenido</a>
+<div class="topbar"><span>Herramienta de proyección de gasto · Tablero gerencial · <em>Datos ficticios — uso interno</em></span><span class="top-right"><span class="pill" id="pillModelo">Modelo ML · MAPE 4,69% · Precisión 95,3%</span><button id="btnPrint" type="button" class="topbtn">Imprimir / PDF</button></span></div>
+
+<header class="header">
+  <div class="logo">PG</div>
+  <div>
+    <p class="eyebrow">Proyección del mes siguiente · Modelo Q × P (volumen × arancel)</p>
+    <h1>Posible gasto del próximo mes: <span class="reserva" id="heroReserva">$2.528.950.500</span> <small class="hero-mes" id="heroMes">· Nov 2026 · <span id="heroSocios">153.000 socios</span></small></h1>
+    <p>Volumen proyectado por el modelo (<span id="heroQ">164.990</span> prestaciones) valorizado con el arancel vigente de cada convenio. Todo cambia en vivo con los controles de arriba.</p>
+    <div class="hero-kpis">
+      <div><small>Q proyectado</small><b id="kHeroQ">—</b></div>
+      <div><small>Precisión del modelo</small><b id="kHeroPrec">—</b></div>
+      <div><small>Alerta vigente</small><b id="kHeroAlert">Invierno: colchón 8–10%</b></div>
+    </div>
+  </div>
+  <span class="badge">Gasto = Q × P · Fondo = gasto bruto</span>
+</header>
+
+<div class="shell">
+  <button id="btnControles" type="button" class="btn-ghost solo-movil">⚙ Controles: ámbito y padrón</button>
+  <section class="controlbar" id="barraControles" aria-label="Controles del tablero">
+    <div class="cb-grupo">
+      <label for="ambito">Ámbito <span class="cb-hint">todo responde a esto</span></label>
+      <select id="ambito"><option value="TOTAL">Toda la obra social</option></select>
+    </div>
+    <div class="cb-grupo">
+      <label for="sociosRange">Socios: <b id="sociosVal">153.000</b></label>
+      <div class="cb-fila">
+        <input id="sociosRange" type="range" min="120000" max="200000" step="1000" value="153000" />
+        <button id="btnPlay" type="button" class="btn-ghost mini" title="Animar padrón">▶</button>
+        <button id="btnResetSocios" type="button" class="btn-ghost mini" title="Volver a 153.000">↺</button>
+      </div>
+    </div>
+    <div class="cb-grupo">
+      <label for="colchonRange">Colchón invierno: <b id="colchonVal">9%</b></label>
+      <div class="cb-fila">
+        <input id="colchonRange" type="range" min="0" max="20" step="1" value="9" />
+        <span class="cb-chip" title="Reserva con colchón aplicado">+ colchón: <b id="vColchon">—</b></span>
+      </div>
+    </div>
+  </section>
+  <p class="side-res" id="ambitoSub">Hero, modelo, estacionalidad, mapa y clusters recalculan.</p>
+
+  <main class="content">
+    <nav class="tabs" role="tablist" aria-label="Secciones del tablero">
+      <button type="button" role="tab" data-tab="resumen" aria-selected="true" aria-label="Resumen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span>Resumen</span></button>
+      <button type="button" role="tab" data-tab="modelo" aria-selected="false" aria-label="Modelo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 17l5-6 4 3 6-8"/><circle cx="8" cy="11" r="1.4"/><circle cx="12" cy="14" r="1.4"/><circle cx="18" cy="6" r="1.4"/></svg><span>Modelo</span></button>
+      <button type="button" role="tab" data-tab="practicas" aria-selected="false" aria-label="Prácticas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1.3"/><circle cx="4" cy="12" r="1.3"/><circle cx="4" cy="18" r="1.3"/></svg><span>Prácticas</span></button>
+      <button type="button" role="tab" data-tab="mapa" aria-selected="false" aria-label="Mapa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Mapa</span></button>
+      <button type="button" role="tab" data-tab="clusters" aria-selected="false" aria-label="Clusters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="11" cy="18" r="2.5"/><path d="M8 7.5l7.5.5M7 8.5l3 7M16.5 10l-3.5 6"/></svg><span>Clusters</span></button>
+      <button type="button" role="tab" data-tab="padron" aria-selected="false" aria-label="Padrón"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.8-3.4 2.9-5 5.5-5s4.7 1.6 5.5 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.5 14.6c2.3.3 4 1.7 4.7 4.4"/></svg><span>Padrón</span></button>
+    </nav>
+
+    <div class="panel active" data-panel="resumen" role="tabpanel">
+      <p class="pregunta">¿Cuánto hay que reservar y por qué? La respuesta en 30 segundos.</p>
+      <section class="kpis" id="hallazgos">
+        <div class="kpi"><small>Reserva estimada (Nov-26)</small><div class="value" id="kGasto">—</div><div class="sub" id="kGastoSub">—</div></div>
+        <div class="kpi"><small>Cantidad de prácticas (Q)</small><div class="value" id="kVol">—</div><div class="sub">Q neto a liquidar en Nov-26</div></div>
+        <div class="kpi"><small>$ promedio por práctica</small><div class="value" id="kArancel">—</div><div class="sub">Reserva / Q</div></div>
+        <div class="kpi"><small>Precisión del modelo</small><div class="value" id="kPrecVal">—</div><div class="sub" id="kPrecSub">—</div></div>
+      </section>
+      <section class="card full" id="conclusiones">
+        <h3>Conclusiones — qué decidir (<span id="cSociosLbl">153.000</span> socios)</h3>
+        <ol class="concl" id="conclList"></ol>
+      </section>
+    </div>
+
+    <div class="panel" data-panel="modelo" role="tabpanel">
+      <p class="pregunta">¿El modelo acierta? Azul = lo que pasó · naranja = lo que predijo · violeta = mes siguiente.</p>
+      <section class="card full" id="modelo"><h3>¿El modelo acierta? Consumo real vs lo que el modelo hubiera dicho</h3>
+        <p class="desc" id="modeloDesc"><b>Línea sólida azul = lo que realmente pasó</b> (Oct-24 → Sep-26, siempre continua). <b>Línea naranja punteada = lo que el modelo predijo</b> para May→Sep-26 sin haber visto esos meses. <b>Violeta punteada = mes siguiente</b> (se mueve con el padrón del panel). El salto Abr→May no es un error: es el pico de invierno que se repite cada año (ver gráfico de estacionalidad).</p>
+        <div class="ml-metrics"><div><small>Error promedio del modelo</small><b id="mMae">±64 prestaciones</b><span id="mMaeSub">En promedio se equivoca en 64 por cada predicción</span></div><div><small>Precisión general</small><b id="mPrec">95,3%</b><span id="mPrecSub">Acierta el 95,3% (error 4,69%)</span></div><div><small>En invierno acierta menos</small><b id="mTemp">92,5%</b><span id="mTempSub">Error 7,5% en pico May–Sep</span></div><div><small>Lo que no vio en julio</small><b id="mGap">—</b><span>Julio real superó al modelo</span></div></div>
+        <div class="chart-wrap"><canvas id="chML"></canvas></div>
+        <p class="desc leyenda">Cómo leerlo sin ayuda: la azul siempre es lo real. Donde la naranja queda por debajo de la azul, el modelo se quedó corto (invierno). Ese hueco justifica reservar un colchón del 8–10% en meses fríos.</p>
+      </section>
+    </div>
+
+    <div class="panel" data-panel="practicas" role="tabpanel">
+      <p class="pregunta">¿Qué práctica mueve el gasto? Elegí un código y mirá su historia de 36 meses.</p>
+      <section class="card full" id="practica"><h3>Proyección por práctica — elegí un código y mirá su curva</h3>
+        <p class="desc">Elegí el código del Nomenclador y mirá su <b>volumen (Q) y gasto ($)</b> mes a mes. Ideal para seguir un código caro o voluminoso.</p>
+        <div class="padron-controls">
+          <div><label for="selPractica">Código de práctica</label><select id="selPractica"></select></div>
+          <div><span id="practicaMeta" class="conc"></span></div>
+        </div>
+        <div class="chart-wrap short"><canvas id="chPractica"></canvas></div>
+        <div class="sindatos" id="sdPractica" hidden>Sin datos para esa práctica con los filtros actuales</div>
+      </section>
+
+      <div class="grid-2">
+      <div class="card" id="estacional"><h3>Estacionalidad — el patrón que manda</h3>
+        <p class="desc">Índice estacional: 100 = mes promedio. Invierno (May–Jul) ~112-114; verano (Dic–Ene) ~90. La salud no es plana.</p>
+        <div class="chart-wrap"><canvas id="chSeason"></canvas></div>
+      </div>
+      <div class="card" id="precio"><h3>Efecto precio vs cantidad — ¿por qué sube el gasto?</h3><p class="desc">Si el gasto sube pero el Q no, el problema son los <b>aranceles</b> (hay que renegociar). Si sube el Q, el problema es <b>consumo</b> (hay que gestionar demanda/invierno). Q y gasto reales del pipeline, 36 meses. Recalcula con el ámbito.</p><div class="chart-wrap short"><canvas id="chLine"></canvas></div></div>
+      </div>
+    </div>
+
+    <div class="panel" data-panel="mapa" role="tabpanel">
+      <p class="pregunta">¿Dónde se gasta? El color marca el gasto; tocá una provincia para el detalle.</p>
+      <div class="card full" id="mapa"><h3>Gasto por provincia — mapa</h3><p class="desc" id="mapDesc">24 jurisdicciones. Color = gasto total del ámbito. Tocá una provincia para entrar a sus datos.</p><div class="chart-wrap" id="mapWrap"><div id="mapProv"></div></div><div class="chart-wrap short" id="barFallback" hidden><canvas id="chBar"></canvas></div><p class="side-res" id="mapSel">—</p><div class="ficha-prov" id="fichaProv" hidden><div class="fp-head"><h4 id="fpNombre">—</h4><button id="btnVolverPais" type="button" class="btn-ghost mini">Volver al país</button></div><div class="fp-grid" id="fpDatos"></div><ol class="fp-top" id="fpTop"></ol></div></div>
+    </div>
+
+    <div class="panel" data-panel="clusters" role="tabpanel">
+      <p class="pregunta">¿Qué grupos de consumo existen? Cada punto es una práctica; el tamaño es la plata que mueve.</p>
+      <div class="card full" id="detalle"><h3>Clusters de prácticas — dónde se concentra el gasto</h3>
+        <div class="franja-3d" id="franja3d">—</div>
+        <p class="desc"><span id="clusterMeta" class="conc"></span></p>
+        <div class="ml-metrics" id="clusterCards"></div>
+        <div class="chart-wrap"><canvas id="chClusters"></canvas></div>
+        <p class="desc leyenda" id="ejes3d">—</p>
+        <div class="vistas3d" role="group" aria-label="Vistas guiadas del 3D">
+          <button type="button" data-vista="TODO" class="btn-ghost active">Ver todo</button>
+          <button type="button" data-vista="INVIERNO" class="btn-ghost">Ver grupo invierno</button>
+          <button type="button" data-vista="CAMPANA" class="btn-ghost">Ver campañas</button>
+          <button type="button" id="btnVista0" class="btn-ghost">Vista inicial</button>
+        </div>
+        <div class="chart-wrap" id="scatterWrap"><div id="scatter3d"></div></div>
+        <p class="side-res" id="pto3d">Tocá un punto del cubo para ver el monto.</p>
+        <ul class="quemirar" id="queMirar"></ul>
+        <p class="desc leyenda" id="clusterDrift"></p>
+      </div>
+    </div>
+
+    <div class="panel" data-panel="padron" role="tabpanel">
+      <p class="pregunta">¿El padrón acompaña? Socios mes a mes + cierre del mes real.</p>
+      <div class="grid-2">
+      <div class="card" id="padron"><h3>Anexo — Padrón (referencia, no es cálculo del modelo)</h3>
+        <p class="desc">Curva de socios como contexto. <b>Línea sólida</b> = socios por mes. <b>Violeta</b> = mes siguiente (control de arriba). <b>Verde</b> = tu referencia.</p>
+        <div class="padron-controls">
+          <div><label for="refSocios">Tu dato actualizado de socios (referencia)</label><input id="refSocios" type="number" min="1" step="1" placeholder="ej. 154000" /></div>
+          <div><button id="btnRef" type="button" class="btn-ghost">Marcar referencia</button> <span id="coinBadge" class="coin" hidden>Coincide con la proyección</span></div>
+        </div>
+        <div class="chart-wrap short"><canvas id="chPadron"></canvas></div>
+        <div class="sindatos" id="sdPadron" hidden>Sin datos para los filtros actuales</div>
+      </div>
+      <div class="card" id="cierre"><h3>Anexo — Cierre mensual</h3>
+        <p class="desc">Confirmá Q real + padrón real y se re-proyecta (36 meses fijos).</p>
+        <div class="cierre-grid">
+          <div><label for="cMes">Mes a cerrar</label><select id="cMes"></select></div>
+          <div><label for="cQ">Q facturado real</label><input id="cQ" type="number" min="0" step="1" /></div>
+          <div><label for="cPadron">Padrón real</label><input id="cPadron" type="number" min="1" step="1" /></div>
+        </div>
+        <div class="viva-btns"><button id="btnCierre" type="button" class="btn-primary">Confirmar mes real</button><button id="btnCsvRow" type="button" class="btn-ghost">Descargar fila CSV</button></div>
+        <p class="side-res" id="cierreMsg">Historia en memoria: 36 meses.</p>
+      </div>
+      </div>
+    </div>
+    <p class="footer">Datos 100% ficticios · Modelo Random Forest (MAPE ~4,7%) · Sin datos reales</p>
+  </main>
+</div>
+<script src="data/catalogo.js?v=3"></script>
+<script src="data/proyeccion.js?v=2"></script>
+<script src="data/clusters.js?v=3"></script>
+<script src="data/provincias_geo.js?v=1"></script>
+<script src="data/analitico.js?v=3"></script>
+<script src="app.js?v=26"></script>
+<script>
+if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "Proyección de gasto — Obra social",
+  "short_name": "Proyección Q×P",
+  "description": "Herramienta de proyección de gasto médico Q×P. Datos ficticios de demostración.",
+  "lang": "es",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A3A6B",
+  "theme_color": "#0A3A6B",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
